@@ -1,0 +1,254 @@
+# 🎬 Sistema CineMack com Mapa de Assentos
+# Regras: sem bibliotecas externas, sem dicionários, usando listas, for, while e funções
+
+
+# ------------------------------
+# Função: formata valores em reais (sem replace)
+# ------------------------------
+def formatar_reais(valor):
+    valor = round(valor, 2)
+    parte_inteira = int(valor)
+    parte_decimal = int((valor - parte_inteira) * 100)
+    return "R$ " + str(parte_inteira) + "," + str(parte_decimal).zfill(2)
+
+
+# ------------------------------
+# Funções de Assentos
+# ------------------------------
+def criar_assentos(qtd):
+    assentos = []
+    for i in range(1, qtd + 1):
+        assentos.append(i)
+    return assentos
+
+
+def mostrar_assentos(assentos):
+    print("\n📍 Mapa de Assentos:\n")
+    for i in range(0, len(assentos), 10):  # mostra em blocos de 10 por linha
+        for j in range(10):
+            if i + j < len(assentos):
+                lugar = assentos[i + j]
+                if lugar == "X":
+                    print(" X ", end="  ")
+                else:
+                    print(f"{lugar:2}", end="  ")
+        print()
+
+
+def escolher_assento(assentos):
+    while True:
+        mostrar_assentos(assentos)
+        try:
+            escolha = int(input("\nDigite o número do assento desejado (0 para voltar): "))
+        except ValueError:
+            print("⚠️  Digite um número válido!")
+            continue
+
+        if escolha == 0:
+            break
+
+        if escolha < 1 or escolha > len(assentos):
+            print("⚠️  Assento inválido!")
+            continue
+
+        if assentos[escolha - 1] == "X":
+            print("❌ Esse assento já está ocupado! Escolha outro.")
+            continue
+
+        assentos[escolha - 1] = "X"
+        print(f"✅ Assento {escolha} reservado com sucesso!")
+        break
+
+
+# ------------------------------
+# Dados iniciais dos filmes
+# ------------------------------
+filmes = ["Filme 1", "Filme 2", "Filme 3"]
+precos_base = [20.0, 15.0, 10.0]
+capacidades = [50, 40, 30]  # número de lugares por filme
+
+# Cada filme tem 2 sessões → listas 3x2
+assentos = [
+    [criar_assentos(capacidades[0]), criar_assentos(capacidades[0])],
+    [criar_assentos(capacidades[1]), criar_assentos(capacidades[1])],
+    [criar_assentos(capacidades[2]), criar_assentos(capacidades[2])]
+]
+
+vendidos_inteira = [[0, 0], [0, 0], [0, 0]]
+vendidos_meia = [[0, 0], [0, 0], [0, 0]]
+vendidos_vip = [[0, 0], [0, 0], [0, 0]]
+avaliacoes = [[], [], []]
+
+
+# ------------------------------
+# Menu principal
+# ------------------------------
+def menu_principal():
+    print("\n===== 🎟️  MENU PRINCIPAL - CINEMACK =====")
+    print("1. Comprar ingressos para Filme 1 - Sessão 1")
+    print("2. Comprar ingressos para Filme 1 - Sessão 2")
+    print("3. Comprar ingressos para Filme 2 - Sessão 1")
+    print("4. Comprar ingressos para Filme 2 - Sessão 2")
+    print("5. Comprar ingressos para Filme 3 - Sessão 1")
+    print("6. Comprar ingressos para Filme 3 - Sessão 2")
+    print("7. Avaliar um filme")
+    print("8. Consultar assentos disponíveis")
+    print("9. Encerrar o dia e gerar relatório")
+    print("===========================================")
+
+
+# ------------------------------
+# Função: comprar ingressos com mapa de assentos
+# ------------------------------
+def comprar_ingressos(filme, sessao):
+    print(f"\n🎬 Compra de ingressos para {filmes[filme]} - Sessão {sessao + 1}")
+    lugares_disponiveis = assentos[filme][sessao].count("X")
+    total_lugares = len(assentos[filme][sessao])
+    livres = total_lugares - lugares_disponiveis
+
+    if livres == 0:
+        print("⚠️  Todos os assentos estão ocupados!")
+        return
+
+    while True:
+        print(f"\nAssentos disponíveis: {livres}")
+        print("Escolha o tipo de ingresso:")
+        print("1. Inteira")
+        print("2. Meia")
+        print("3. VIP")
+        print("4. Voltar")
+        tipo = int(input("Opção: "))
+
+        if tipo == 4:
+            break
+        if tipo not in [1, 2, 3]:
+            print("Opção inválida!")
+            continue
+
+        qtd = int(input("Quantos ingressos deseja comprar? "))
+        if qtd <= 0 or qtd > livres:
+            print("⚠️  Quantidade inválida ou assentos insuficientes!")
+            continue
+
+        for _ in range(qtd):
+            escolher_assento(assentos[filme][sessao])
+
+        preco_base = precos_base[filme]
+        if tipo == 1:
+            vendidos_inteira[filme][sessao] += qtd
+            preco_total = preco_base * qtd
+        elif tipo == 2:
+            vendidos_meia[filme][sessao] += qtd
+            preco_total = (preco_base / 2) * qtd
+        else:
+            vendidos_vip[filme][sessao] += qtd
+            preco_total = (preco_base * 1.5) * qtd
+
+        print(f"\n✅ Compra realizada! Valor total: {formatar_reais(preco_total)}")
+        break
+
+
+# ------------------------------
+# Função: Avaliar filme
+# ------------------------------
+def avaliar_filme():
+    print("\n--- Avaliar Filme ---")
+    for i in range(len(filmes)):
+        print(f"{i + 1}. {filmes[i]}")
+    opcao = int(input("Escolha o filme para avaliar: ")) - 1
+
+    if opcao < 0 or opcao >= len(filmes):
+        print("Opção inválida!")
+        return
+
+    nota = int(input(f"Avalie {filmes[opcao]} (1 a 5): "))
+    if nota < 1 or nota > 5:
+        print("Nota inválida!")
+        return
+
+    avaliacoes[opcao].append(nota)
+    print("🎬 Obrigado pela sua avaliação!")
+
+
+# ------------------------------
+# Função: Consultar assentos disponíveis
+# ------------------------------
+def consultar_assentos():
+    print("\n--- Consulta de Assentos Disponíveis ---")
+    for i in range(3):
+        for j in range(2):
+            ocupados = assentos[i][j].count("X")
+            livres = len(assentos[i][j]) - ocupados
+            print(f"{filmes[i]} - Sessão {j + 1}: {livres} lugares disponíveis")
+
+
+# ------------------------------
+# Função: Gerar relatório final
+# ------------------------------
+def gerar_relatorio():
+    print("\n===== 🎬 RELATÓRIO FINAL DO DIA =====")
+    total_ingressos = 0
+    total_receita = 0.0
+
+    for i in range(3):
+        for j in range(2):
+            print(f"\n{filmes[i]} - Sessão {j + 1}:")
+            print("Quantidade de ingressos vendidos:")
+            print(f"- Inteira: {vendidos_inteira[i][j]}")
+            print(f"- Meia: {vendidos_meia[i][j]}")
+            print(f"- VIP: {vendidos_vip[i][j]}")
+
+            preco_inteira = vendidos_inteira[i][j] * precos_base[i]
+            preco_meia = vendidos_meia[i][j] * (precos_base[i] / 2)
+            preco_vip = vendidos_vip[i][j] * (precos_base[i] * 1.5)
+
+            print("Receita por tipo:")
+            print(f"- Inteira: {formatar_reais(preco_inteira)}")
+            print(f"- Meia: {formatar_reais(preco_meia)}")
+            print(f"- VIP: {formatar_reais(preco_vip)}")
+
+            total_ingressos += vendidos_inteira[i][j] + vendidos_meia[i][j] + vendidos_vip[i][j]
+            total_receita += preco_inteira + preco_meia + preco_vip
+
+    print("\n--- Médias de Avaliação ---")
+    for i in range(3):
+        if len(avaliacoes[i]) > 0:
+            media = sum(avaliacoes[i]) / len(avaliacoes[i])
+            print(f"{filmes[i]}: {round(media, 2)} ⭐")
+        else:
+            print(f"{filmes[i]}: Sem avaliações")
+
+    print("\n--- Totais do Dia ---")
+    print(f"Total de ingressos vendidos: {total_ingressos}")
+    print(f"Receita total do dia: {formatar_reais(total_receita)}")
+    print("=========================================")
+
+
+# ------------------------------
+# Programa principal
+# ------------------------------
+def main():
+    while True:
+        menu_principal()
+        opcao = int(input("Escolha uma opção: "))
+
+        if opcao == 9:
+            gerar_relatorio()
+            print("👋 Encerrando o sistema CineMack. Até amanhã!")
+            break
+        elif opcao in [1, 2, 3, 4, 5, 6]:
+            filme = (opcao - 1) // 2
+            sessao = (opcao - 1) % 2
+            comprar_ingressos(filme, sessao)
+        elif opcao == 7:
+            avaliar_filme()
+        elif opcao == 8:
+            consultar_assentos()
+        else:
+            print("Opção inválida! Tente novamente.")
+
+
+# ------------------------------
+# Executar programa
+# ------------------------------
+main()
